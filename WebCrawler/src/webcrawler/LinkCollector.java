@@ -17,49 +17,96 @@ import java.util.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 
+/**
+ *
+ * @author eimantas
+ */
 public class LinkCollector {
     
+    final private ArrayList<String> totalLinks      = new ArrayList<>();
+    final private ArrayList<String> targetedLinks   = new ArrayList<>();
+
     private static int index;
+    
     private ArrayList<String> unwantedLinks;
+
     private int links_to_crawl = 0;
+
+    private String phrase       = "";
+    private String wiki_lang    = "";
+
+    
     private String outputFile = "Output";
-    private String phrase = "";
-    private String wiki_lang = "";
+
+    final public LinkCollector static createCrawler()
+    {
+        return new LinkCollector();
+    }
+
+    final public LinkCollector()
+    {
+
+        this.IgnoredSearchHits();
         
         this.index = 0;
+        
     }
     
-    public void entries_to_ignore(){
-        try {
-            String words = new String(Files.readAllBytes(Paths.get("entries to ignore")));
-            unwantedLinks = new ArrayList<>(Arrays.asList(words.split("\\s+")));
-        } catch (IOException ex) {
-            Logger.getLogger(LinkCollector.class.getName()).log(Level.SEVERE, null, ex);
+    public void IgnoredSearchHits()
+    {
+
+        try 
+        {
+            String  words = new String(Files.readAllBytes(Paths.get("entries to ignore")));
+
+            this.unwantedLinks = new ArrayList<>(Arrays.asList(words.split("\\s+")));
+
+        } 
+        catch (IOException ex) 
+        {
+            Logger.getLogger(LinkCollector.class.getName()).log(Level.SEVERE, "Error: failed to creating search hits to ignore", ex);
         }
     }
 
-    public void scrapWiki( String link ){
+    public void scrapWiki(String link){
+
         WebCrawler.gui.setStatusLabel("Running");
+
         try {
-            org.jsoup.nodes.Document doc = Jsoup.connect(link).get();
-            org.jsoup.select.Elements links = doc.select("a");
-            int i = 0;
+
+            org.jsoup.nodes.Document doc        = Jsoup.connect(link).get();
+            org.jsoup.select.Elements links     = doc.select("a");
+
+            int linkIdx = 0;
+
             String s[] = new String[links.size()];
-            for(Element e: links){
-                s[i++]= e.attr("abs:href"); 
+
+            for (Element e: links)
+            {
+                s[linkIdx++]= e.attr("abs:href"); 
             }
-            for(String element: s){
-                if(!isDuplicate(element) && legitLink(element)){   
+
+            for (String element: s)
+            {
+
+                if (!isDuplicate(element) && legitLink(element))
+                {   
+
                     totalLinks.add(element);
-                    //out.println(totalLinks.size()); 
+
                     org.jsoup.select.Elements body = doc.select("p");
-                    for(Element el : body ){
-                        if(el.ownText().toLowerCase().contains(phrase)){
+
+                    for (Element el : body)
+                    {
+                        if (el.ownText().toLowerCase().contains(phrase))
+                        {
                             targetedLinks.add(element);
+
                             break;
                         }
                     }
                 }
+
             }
         }catch(java.net.MalformedURLException urle ){
             out.println("urle exception caught");
@@ -76,26 +123,39 @@ public class LinkCollector {
         }catch (IOException ex) {
             out.println("IO exception caught");
         }
-        if( index < totalLinks.size() && totalLinks.size() < links_to_crawl  ){
+
+        if( index < totalLinks.size() && totalLinks.size() < links_to_crawl  )
+        {
             scrapWiki(totalLinks.get(index++));
         }
     }
     
-    public void searchByTitle(String link) {
+    public void searchByTitle(String link) 
+    {
         WebCrawler.gui.setStatusLabel("Running");
-        try{
-            org.jsoup.nodes.Document doc = Jsoup.connect(link).get();
-            org.jsoup.select.Elements links = doc.select("a");
+
+        try
+        {
+
+            org.jsoup.nodes.Document doc        = Jsoup.connect(link).get();
+            org.jsoup.select.Elements links     = doc.select("a");
+            String s[]                          = new String[links.size()];
+
             int i = 0;
 
-            for(Element e: links){
+            for (Element e: links)
+            {
                 s[i++]= e.attr("abs:href");
             }
-            for(String element: s){
-                if(!isDuplicate(element) && legitLink(element)){   
+
+            for (String element: s)
+            {
+                if (!isDuplicate(element) && legitLink(element))
+                {   
                     totalLinks.add(element); 
-                    out.println(totalLinks.size()); 
-                    if( element.toLowerCase().contains(phrase) ){
+                    
+                    if( element.toLowerCase().contains(phrase) )
+                    {
                         targetedLinks.add(element);
                     }
                 }
@@ -121,71 +181,104 @@ public class LinkCollector {
     }
     
     public void searchByBody(String link){
+
         WebCrawler.gui.setStatusLabel("Running");
-        try{
-            org.jsoup.nodes.Document doc = Jsoup.connect(link).get();
-            org.jsoup.select.Elements links = doc.select("a");
+
+        try
+        {
+            org.jsoup.nodes.Document doc        = Jsoup.connect(link).get();
+            org.jsoup.select.Elements links     = doc.select("a");
+
+            String s[]                          = new String[links.size()];
+
             int i = 0;
 
-            for(Element e: links){
+            for (Element e: links)
+            {
                 s[i++]= e.attr("abs:href");
             }
-            for(String element: s){
-                if(!isDuplicate(element) && legitLink(element)){   
+
+            for (String element: s)
+            {
+                if (!isDuplicate(element) && legitLink(element))
+                {   
                     totalLinks.add(element);
+
                     org.jsoup.select.Elements body = doc.select("p");
-                    for(Element el : body){
-                        if(el.ownText().toLowerCase().contains(phrase.toLowerCase())){
+
+                    for (Element el : body)
+                    {
+                        if (el.ownText().toLowerCase().contains(phrase.toLowerCase()))
+                        {
                             targetedLinks.add(element);
+
                             break;
                         }
                     }
                 }
             }
-        }catch(java.net.MalformedURLException urle ){
+        }catch (java.net.MalformedURLException urle ){
             out.println("urle exception caught");
-        }catch(java.lang.IllegalArgumentException arge){
+        }catch (java.lang.IllegalArgumentException arge){
             out.println("arge exception caught");
-        }catch(org.jsoup.HttpStatusException httpe){
+        }catch (org.jsoup.HttpStatusException httpe){
             out.println("httpe exception caught");
-        }catch(org.jsoup.UnsupportedMimeTypeException mimetypee){
+        }catch (org.jsoup.UnsupportedMimeTypeException mimetypee){
             out.println("mimetypee exception caught");
-        }catch(java.net.SocketTimeoutException timeoutex){
+        }catch (java.net.SocketTimeoutException timeoutex){
             out.println("timeout exception caught");
         } catch (IOException ex) {
             out.println("IO exception caught");
         }
-        if( index < totalLinks.size() && totalLinks.size() < links_to_crawl  ){  
+
+        if (index < totalLinks.size() && totalLinks.size() < links_to_crawl){
+
             searchByBody(totalLinks.get(index++));
+
         }
     }
     
-    public ArrayList getLinkArr(){
+    public ArrayList getLinkArr()
+    {
         return this.totalLinks;
     }
     
-    public ArrayList getTargetedLinksArr(){
+    public ArrayList getTargetedLinksArr()
+    {
         return this.targetedLinks;
     }
     
-    public boolean legitLink( String link ){
-        for( String el : unwantedLinks ){
-            if( link.contains(el) || (link.contains(".wiki") && link.length() == 30 && !link.contains(getWikiLang()) ) ){
+    public boolean legitLink( String link )
+    {
+
+        for ( String el : unwantedLinks )
+        {
+
+            if ( link.contains(el) || (link.contains(".wiki") && link.length() == 30 && !link.contains(getWikiLang())))
+            {
                 return false;
+
             }
         }
+
         return true;
     }
     
-    public boolean isDuplicate( String link ){
-        if( totalLinks.contains(link)){
+    public boolean isDuplicate( String link )
+    {
+        if (totalLinks.contains(link))
+        {
             return true;
-        } else {
+
+        } 
+        else 
+        {
             return false;
         }
     }
     
-    public void setPhrase( String word ){
+    public void setPhrase( String word )
+    {
         this.phrase = word;
     }
     
@@ -193,60 +286,85 @@ public class LinkCollector {
         return this.phrase;
     }
     
-    public void setOutputFile( String filename ){
+    public void setOutputFile( String filename )
+    {
         this.outputFile = filename;
     }
     
-    public String getOutputFile( String filename ){
+    public String getOutputFile( String filename )
+    {
         return this.outputFile;
     }
     
-    public void setLinksToCrawl( int number ){
+    public void setLinksToCrawl( int number )
+    {
         this.links_to_crawl = number;
     }
     
-    public void setWikiLang( String url ){
+    public void setWikiLang( String url )
+    {
         this.wiki_lang = url.substring(url.indexOf("://")+2, url.indexOf("wiki"));
     }
     
-    public String getWikiLang(){
+    public String getWikiLang()
+    {
         return this.wiki_lang;
     }
     
-    public void clearWikiLang(){
+    public void clearWikiLang()
+    {
         this.wiki_lang = "";
     }
     
-    public void writeToFile(){
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.outputFile), "utf-8"))) {
+    public void writeToFile()
+    {
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.outputFile), "utf-8"))) 
+        {
             writer.write("Crawled url : " + WebCrawler.gui.getURLField() + "\n" +
                          "Was searching for : " + WebCrawler.gui.getKeywordField() + "\n" +
                          "Targeted entries found : " + targetedLinks.size() + "\n");
-            for( String entry : targetedLinks ){
+
+            for ( String entry : targetedLinks )
+            {
                 writer.write(entry+"\n");
+
             }
-        } catch (IOException ex) {
+        } 
+        catch (IOException ex) 
+        {
             Logger.getLogger(LinkCollector.class.getName()).log(Level.SEVERE, null, ex);
+
         }
     }
     
     public void openFile(){
-        try {
+
+        try 
+        {
             Desktop.getDesktop().open(new File(this.outputFile));
-        } catch (IOException ex) {
+
+        } catch (IOException ex) 
+        {
             Logger.getLogger(LinkCollector.class.getName()).log(Level.SEVERE, null, ex);
+
         }
+
     }
     
     public void resetFields(){
+
         WebCrawler.gui.cleanURLField();
         WebCrawler.gui.cleanKeywordField();
         WebCrawler.gui.cleanOutputField();
         WebCrawler.gui.cleanNoLinks();
+
         clearWikiLang();
+
         totalLinks.clear();
         targetedLinks.clear();
+
         WebCrawler.gui.setStatusLabel("Ready");
+
         this.index = 0;
     }
     
