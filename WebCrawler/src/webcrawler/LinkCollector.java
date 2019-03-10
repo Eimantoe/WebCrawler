@@ -19,8 +19,6 @@ import org.jsoup.nodes.Element;
 
 public class LinkCollector {
     
-    private ArrayList<String> totalLinks = new ArrayList<>();
-    private ArrayList<String> targetedLinks = new ArrayList<>();
     private static int index;
     private ArrayList<String> unwantedLinks;
     private int links_to_crawl = 0;
@@ -28,8 +26,6 @@ public class LinkCollector {
     private String phrase = "";
     private String wiki_lang = "";
         
-    public LinkCollector(){
-        entries_to_ignore();
         this.index = 0;
     }
     
@@ -91,7 +87,6 @@ public class LinkCollector {
             org.jsoup.nodes.Document doc = Jsoup.connect(link).get();
             org.jsoup.select.Elements links = doc.select("a");
             int i = 0;
-            String s[] = new String[links.size()];
 
             for(Element e: links){
                 s[i++]= e.attr("abs:href");
@@ -131,7 +126,6 @@ public class LinkCollector {
             org.jsoup.nodes.Document doc = Jsoup.connect(link).get();
             org.jsoup.select.Elements links = doc.select("a");
             int i = 0;
-            String s[] = new String[links.size()];
 
             for(Element e: links){
                 s[i++]= e.attr("abs:href");
